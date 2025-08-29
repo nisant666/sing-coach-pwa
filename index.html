@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sing Coach</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root { --bg:#0b1020; --card:#121b36; --muted:#94a3b8; --accent:#22c55e; --warn:#f59e0b; --danger:#ef4444; --ink:#e2e8f0; --pad:14px; --radius:16px; --shadow:0 6px 24px rgba(0,0,0,.25); }
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:linear-gradient(180deg,#0b1020,#0a0f1f 60%);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial}
+    header{position:sticky;top:0;z-index:2;background:rgba(11,16,32,.8);backdrop-filter:blur(6px);border-bottom:1px solid #1f2a4a}
+    .wrap{max-width:900px;margin:0 auto;padding:0 var(--pad)}
+    .bar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0}
+    .brand{display:flex;gap:10px;align-items:center}.logo{width:32px;height:32px;border-radius:8px;background:conic-gradient(from 0deg,#22c55e,#60a5fa,#22d3ee,#22c55e)}
+    h1{font-size:18px;margin:0}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin:16px 0}
+    @media(min-width:820px){.grid{grid-template-columns:1.1fr .9fr}}
+    .card{background:linear-gradient(180deg,#121b36,#101732);border:1px solid #1e2a4a;border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card h2{margin:0;padding:16px;border-bottom:1px solid #1f2a4a;font-size:16px;font-weight:600}
+    .card .body{padding:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    label{color:var(--muted);font-size:13px}
+    select,input[type=number],button{background:#0f172a;color:var(--ink);border:1px solid #233154;border-radius:12px;padding:10px 12px}
+    button{cursor:pointer}
+    button.primary{background:#16a34a;border-color:#16a34a;color:white}
+    button.ghost{background:transparent;border-color:#2a3a66}
+    .meters{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+    .meter{background:#0f172a;border:1px solid #233154;border-radius:12px;padding:12px}
+    .meter .big{font-size:40px;font-weight:700;line-height:1.1}
+    .meter .small{font-size:13px;color:var(--muted)}
+    .cent-bar{height:10px;border-radius:999px;background:#0f172a;border:1px solid #233154;position:relative;overflow:hidden;margin-top:8px}
+    .cent-dot{position:absolute;top:0;bottom:0;width:3px;background:var(--accent);left:50%}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:#0f172a;border:1px solid #2a3a66}
+    .score{font-size:28px;font-weight:700}
+    footer{color:var(--muted);text-align:center;padding:22px 0}
+    .install{margin-left:auto}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap bar">
+      <div class="brand"><div class="logo"></div><h1>Sing Coach</h1></div>
+      <button id="installBtn" class="ghost install" hidden>Install</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <section class="card" id="tunerCard">
+        <h2>Tuner</h2>
+        <div class="body">
+          <div class="row">
+            <button id="micBtn" class="primary">Start mic</button>
+            <label>A4:
+              <input id="a4" type="number" min="400" max="480" step="1" value="440" style="width:90px">
+            </label>
+            <label>Key (Sa):
+              <select id="key">
+                <option>C</option><option>C#</option><option>D</option><option>D#</option>
+                <option>E</option><option>F</option><option>F#</option><option>G</option>
+                <option>G#</option><option>A</option><option>A#</option><option>B</option>
+              </select>
+            </label>
+            <button id="refTone" class="ghost">Play Sa</button>
+          </div>
+
+          <div class="meters">
+            <div class="meter">
+              <div class="small">Detected</div>
+              <div id="note" class="big">—</div>
+              <div id="freq" class="small">0 Hz</div>
+            </div>
+            <div class="meter">
+              <div class="small">Cents</div>
+              <div id="centText" class="big">0</div>
+              <div class="cent-bar"><div id="centDot" class="cent-dot"></div></div>
+            </div>
+          </div>
+
+          <div class="pill">Pitch stability: <span id="stability" style="margin-left:8px">—</span></div>
+          <div class="pill">Latency: <span id="latency" style="margin-left:8px">—</span></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Practice</h2>
+        <div class="body">
+          <div class="row">
+            <label>Exercise:
+              <select id="exercise">
+                <option value="sustain">Sustain Sa (8s)</option>
+                <option value="sargam_up">Sa Re Ga Ma Pa Dha Ni Sa</option>
+                <option value="sargam_dn">Sa Ni Dha Pa Ma Ga Re Sa</option>
+                <option value="interval">Sa → Pa (perfect fifth)</option>
+                <option value="arpeggio">Sa Ga Pa Sa (1–3–5–8)</option>
+              </select>
+            </label>
+            <label>BPM:
+              <input id="bpm" type="number" min="40" max="160" step="1" value="80" style="width:80px">
+            </label>
+            <button id="startEx" class="primary">Start</button>
+            <button id="stopEx" class="ghost">Stop</button>
+          </div>
+
+          <div class="pill">Target: <span id="target" style="margin-left:8px">—</span></div>
+          <div class="pill">Timer: <span id="timer" style="margin-left:8px">0.0s</span></div>
+          <div class="pill">Accuracy window: ± <span id="win">30</span> cents</div>
+          <div>Score: <span class="score" id="score">0%</span></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>Works offline after install. Built with Web Audio API.</footer>
+
+  <script>
+    // ---------- Utilities ----------
+    const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const toFixed = (n, d=2) => (Number.isFinite(n)? n.toFixed(d): '—');
+
+    function freqToMidi(f, a4=440){ return 69 + 12*Math.log2(f / a4); }
+    function midiToFreq(m, a4=440){ return a4 * Math.pow(2, (m-69)/12); }
+    function midiToName(m){ const n=Math.round(m); const name=NOTE_NAMES[(n+1200)%12]; const oct=Math.floor(n/12)-1; return name+oct; }
+    function centsDiff(f, m, a4=440){ const ref=midiToFreq(Math.round(m), a4); return 1200*Math.log2(f/ref); }
+
+    function keySaFreq(key='C', a4=440){
+      const A4 = a4;
+      const C4 = A4 * Math.pow(2, -9/12); // A4 -> C4
+      const C0 = C4 * Math.pow(2,-4);
+      const idx = NOTE_NAMES.indexOf(key);
+      const midi = 12*4 + idx; // octave 4
+      return C0 * Math.pow(2, midi/12);
+    }
+
+    // Autocorrelation pitch detection
+    const MIN_SAMPLES = 60; // ~367 Hz upper bound
+    function detectPitch(buf, sampleRate){
+      const SIZE = buf.length;
+      const MAX = Math.floor(SIZE/2);
+      let rms = 0;
+      for(let i=0;i<SIZE;i++){ const v = buf[i]; rms += v*v; }
+      rms = Math.sqrt(rms/SIZE);
+      if(rms < 0.007) return {freq:0, clarity:0}; // too quiet
+
+      let bestOffset = -1, bestCorr = 0, lastCorr = 1, found = false;
+      const corr = new Array(MAX).fill(0);
+
+      for(let off=MIN_SAMPLES; off<MAX; off++){
+        let c = 0;
+        for(let i=0;i<MAX;i++){ c += Math.abs(buf[i] - buf[i+off]); }
+        c = 1 - (c / MAX);
+        corr[off] = c;
+        if(c > 0.9 && c > lastCorr) found = true;
+        if(c > bestCorr){ bestCorr = c; bestOffset = off; }
+        lastCorr = c;
+      }
+      if(!found || bestCorr < 0.01) return {freq:0, clarity:0};
+
+      const shift = (corr[bestOffset+1]-corr[bestOffset-1])/(2*(2*corr[bestOffset]-corr[bestOffset-1]-corr[bestOffset+1]));
+      const period = sampleRate / (bestOffset + (isFinite(shift)? shift:0));
+      return {freq: period, clarity: bestCorr};
+    }
+
+    // ---------- App state ----------
+    const state = {
+      a4: 440, key: 'C',
+      micOn: false, audioCtx: null, analyser: null, buf: null, osc: null,
+      // practice
+      exercise: 'sustain', bpm: 80, timerId: null, stepIndex: 0,
+      score: 0, total: 0, targetMidi: null, windowCents: 30,
+      smoothHz: 0, smoothCent: 0, latencyMs: 0
+    };
+
+    // ---------- DOM ----------
+    const micBtn=document.getElementById('micBtn');
+    const a4Input=document.getElementById('a4');
+    const keySel=document.getElementById('key');
+    const noteEl=document.getElementById('note');
+    const freqEl=document.getElementById('freq');
+    const centEl=document.getElementById('centText');
+    const centDot=document.getElementById('centDot');
+    const stabilityEl=document.getElementById('stability');
+    const latencyEl=document.getElementById('latency');
+    const refBtn=document.getElementById('refTone');
+    const exSel=document.getElementById('exercise');
+    const bpmInput=document.getElementById('bpm');
+    const startEx=document.getElementById('startEx');
+    const stopEx=document.getElementById('stopEx');
+    const targetEl=document.getElementById('target');
+    const timerEl=document.getElementById('timer');
+    const winEl=document.getElementById('win');
+    const scoreEl=document.getElementById('score');
+    winEl.textContent = state.windowCents;
+
+    a4Input.oninput = () => state.a4 = +a4Input.value;
+    keySel.oninput = () => state.key = keySel.value;
+    exSel.oninput = () => state.exercise = exSel.value;
+    bpmInput.oninput = () => state.bpm = +bpmInput.value;
+
+    refBtn.onclick = () => {
+      if(!state.audioCtx) state.audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      if(state.osc){
+        state.osc.stop(); state.osc.disconnect(); state.osc = null; refBtn.textContent = 'Play Sa'; return;
+      }
+      const freq = keySaFreq(state.key, state.a4);
+      const o = state.audioCtx.createOscillator();
+      const g = state.audioCtx.createGain();
+      g.gain.value = 0.05;
+      o.type = 'sine'; o.frequency.value = freq;
+      o.connect(g).connect(state.audioCtx.destination);
+      o.start(); state.osc = o; refBtn.textContent = 'Stop Sa';
+    };
+
+    micBtn.onclick = async () => {
+      if(state.micOn){ stopMic(); return; }
+      await startMic();
+    };
+
+    async function startMic(){
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const t0 = performance.now();
+      const ctx = state.audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+      state.audioCtx = ctx;
+      const src = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 2048;
+      const buf = new Float32Array(analyser.fftSize);
+      src.connect(analyser);
+      state.analyser = analyser;
+      state.buf = buf;
+      state.micOn = true;
+      micBtn.textContent = 'Stop mic';
+      state.latencyMs = Math.round((performance.now()-t0));
+      latencyEl.textContent = state.latencyMs + ' ms';
+      tick();
+    }
+    function stopMic(){
+      state.micOn = false;
+      micBtn.textContent = 'Start mic';
+      noteEl.textContent = '—'; freqEl.textContent = '0 Hz'; centEl.textContent = '0';
+    }
+
+    function tick(){
+      if(!state.micOn) return;
+      state.analyser.getFloatTimeDomainData(state.buf);
+      const {freq, clarity} = detectPitch(state.buf, state.audioCtx.sampleRate);
+      const alpha = 0.2;
+      const hz = freq || 0;
+      state.smoothHz = state.smoothHz? (alpha*hz + (1-alpha)*state.smoothHz) : hz;
+      const midi = hz? freqToMidi(state.smoothHz, state.a4): null;
+      const name = midi? midiToName(midi): '—';
+      const cents = hz? centsDiff(state.smoothHz, midi, state.a4): 0;
+      state.smoothCent = state.smoothCent? (0.3*cents + 0.7*state.smoothCent) : cents;
+
+      noteEl.textContent = name;
+      freqEl.textContent = toFixed(state.smoothHz, 1) + ' Hz';
+      centEl.textContent = Math.round(state.smoothCent);
+      const dot = Math.max(0, Math.min(100, 50 + state.smoothCent/1.2)); // ±60c → 0..100%
+      centDot.style.left = dot + '%';
+      stabilityEl.textContent = (clarity>0? Math.round(clarity*100): '—') + '%';
+
+      // Practice scoring
+      if(state.targetMidi != null){
+        const centsErr = hz? Math.abs(1200*Math.log2(hz / midiToFreq(state.targetMidi, state.a4))): 1200;
+        const ok = centsErr <= state.windowCents;
+        if(hz && clarity>0.75){
+          state.total += 1;
+          if(ok) state.score += 1;
+          scoreEl.textContent = Math.round(100*state.score/Math.max(1,state.total)) + '%';
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    // ---------- Practice engine ----------
+    const DEG = { 'Sa':0,'Re':2,'Ga':4,'Ma':5,'Pa':7,'Dha':9,'Ni':11 }; // major steps
+    function degreeToMidi(deg, key='C', octave=4){
+      const baseIdx = NOTE_NAMES.indexOf(key);
+      const step = DEG[deg];
+      return (octave+1)*12 + ((baseIdx + step) % 12);
+    }
+
+    function makeSequence(kind, key){
+      const sa4 = degreeToMidi('Sa', key, 4);
+      return {
+        sustain: [{label:'Sa', midi: sa4, beats: 8}],
+        sargam_up: ['Sa','Re','Ga','Ma','Pa','Dha','Ni','Sa'].map((d,i)=>({label:d, midi: degreeToMidi(d, key, 4 + (d==='Sa'&&i>0?1:0)), beats: 2})),
+        sargam_dn: ['Sa','Ni','Dha','Pa','Ma','Ga','Re','Sa'].map((d,i)=>({label:d, midi: degreeToMidi(d, key, 4 - (d==='Sa'&&i>0?1:0)), beats: 2})),
+        interval: [{label:'Sa', midi: sa4, beats:2},{label:'Pa', midi: sa4+7, beats:2}],
+        arpeggio: [{label:'Sa', midi: sa4, beats:2},{label:'Ga', midi: sa4+4, beats:2},{label:'Pa', midi: sa4+7, beats:2},{label:'Sa', midi: sa4+12, beats:2}]
+      }[kind];
+    }
+
+    function startPractice(){
+      state.score = 0; state.total = 0; scoreEl.textContent = '0%';
+      const seq = makeSequence(state.exercise, state.key);
+      state.stepIndex = 0;
+      const spb = 60/state.bpm;
+      const beep = makeBeep();
+
+      function nextStep(){
+        if(state.stepIndex >= seq.length){ stopPractice(); return; }
+        const step = seq[state.stepIndex];
+        state.targetMidi = step.midi;
+        targetEl.textContent = step.label + ' (' + midiToName(step.midi) + ')';
+        beep(midiToFreq(step.midi, state.a4), 0.15);
+        state.timerId = setTimeout(()=>{ state.stepIndex += 1; nextStep(); }, step.beats * spb * 1000);
+      }
+      nextStep();
+      runTimer();
+      if(!state.micOn) startMic();
+    }
+    function stopPractice(){
+      state.targetMidi = null;
+      clearTimeout(state.timerId);
+      targetEl.textContent = '—';
+    }
+    function runTimer(){
+      const t0 = performance.now();
+      (function loop(){
+        if(state.targetMidi==null){ timerEl.textContent = '0.0s'; return; }
+        const dt = (performance.now()-t0)/1000;
+        timerEl.textContent = dt.toFixed(1)+'s';
+        requestAnimationFrame(loop);
+      })();
+    }
+
+    function makeBeep(){
+      if(!state.audioCtx) state.audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      const ctx = state.audioCtx;
+      return (freq, dur=0.12)=>{
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type='sine'; osc.frequency.value=freq;
+        gain.gain.value=0;
+        osc.connect(gain).connect(ctx.destination);
+        osc.start();
+        const now = ctx.currentTime;
+        gain.gain.linearRampToValueAtTime(0.08, now+0.005);
+        gain.gain.linearRampToValueAtTime(0.0, now+dur);
+        osc.stop(now+dur+0.02);
+      };
+    }
+
+    startEx.onclick = startPractice;
+    stopEx.onclick = stopPractice;
+
+    // ---------- PWA install ----------
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt = e; installBtn.hidden = false; });
+    installBtn.addEventListener('click', async ()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; installBtn.hidden = true; });
+
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', ()=>{ navigator.serviceWorker.register('service-worker.js'); });
+    }
+  </script>
+</body>
+</html>
